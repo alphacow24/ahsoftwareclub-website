@@ -108,8 +108,11 @@ chatSocket.onmessage = function (event) {
     // Write the logic in other functions, like connect(username).
 
     switch(data.type){
-        case "chat.connection":
-            connect(data["username"]);
+        case "chat_connection":
+            connect(data);
+            break;
+        case "monopoly_roll":
+            handle_monopoly_roll(data);
             break;
         default:
             // If the type is not implemented or does not exist, we error.
@@ -119,6 +122,26 @@ chatSocket.onmessage = function (event) {
     }
 }
 
-function connect(username){
-        display.innerHTML = username + ", press R to roll.";
+document.addEventListener("keydown", function (event){
+    switch (event.code){
+        case "KeyR":
+            chatSocket.send(JSON.stringify({"type": "roll"}));
+            break;
+    }
+})
+
+function connect(data){
+        display.innerHTML = data["username"] + ", press R to roll.";
+}
+
+function handle_monopoly_roll(data) {
+    const roll = data["roll"];
+    const username = data["username"];
+    const position = data["current_position"];
+
+    display.innerHTML = username + " rolled a " + roll;
+
+    let span = document.getElementById(position);
+
+    span.append(player);
 }
