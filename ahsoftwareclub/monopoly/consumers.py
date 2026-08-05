@@ -5,6 +5,7 @@ from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import Group
+import urllib.parse
 
 
 
@@ -20,17 +21,24 @@ class MonopolyConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
         self.room_group_name = f"chat_{self.room_name}"
-
-
-        await self.accept()
+        self.user_name = await self.get_name()
         # Join room group
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        await self.accept()
 
-        self.user_name = await self.get_name()
+        username_to_send = await self.get_group_users_sync(self.room_name)
+
+        users = []
+        for i in username_to_send:
+            users.append(i.get_username())
 
         await self.channel_layer.group_send(
             self.room_group_name,
-            {"type": "chat.connection", "username": self.user_name}
+            {
+                "type": "chat.connection",
+                "username": self.user_name,
+                "active_users": users
+            }
         )
 
 
@@ -71,8 +79,14 @@ class MonopolyConsumer(AsyncWebsocketConsumer):
 
     async def chat_connection(self, event):
         username = event["username"]
-
-        await self.send(text_data=json.dumps({"type": "chat_connection", "username": username}))
+        active_users = event["active_users"]
+        print(active_users)
+        await self.send(text_data=json.dumps(
+            {
+                "type": "chat_connection",
+                "username": username,
+                "activeUsers": active_users
+                                              }))
 
     async def monopoly_roll(self, event):
         username = event["username"]
@@ -87,7 +101,7 @@ class MonopolyConsumer(AsyncWebsocketConsumer):
     def get_name(self):
         user = self.scope["user"]
         name = user.get_username()
-        print(name)
+
         return name
 
     @sync_to_async

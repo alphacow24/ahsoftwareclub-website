@@ -81,17 +81,6 @@ for (let i = 0; i < 36; i++) {
     grid.append(item);
 }
 
-// Creates an image that is the player
-const player = document.createElement('img');
-// Makes the image a hat
-player.src = "/static/monopoly/monopoly_piece_1.svg";
-// Lets javascript know what the player is referenced as
-player.id = "monopoly-1";
-// Gives the player a class, so the CSS makes it pretty
-player.className = "piece";
-
-// Starts by putting the player in tile 2
-document.getElementById("2").appendChild(player);
 
 
 // When the websocket connects (When chatSocket gets opened),
@@ -131,7 +120,32 @@ document.addEventListener("keydown", function (event){
 })
 
 function connect(data){
+        const activeUsers = data.activeUsers;
+
         display.innerHTML = data["username"] + ", press R to roll.";
+
+        // Creates an image that is the player
+        const player = document.createElement('img');
+        // Makes the image a hat
+        player.src = "/static/monopoly/monopoly_piece_1.svg";
+        // Lets javascript know what the player is referenced as
+        player.id = data["username"];
+        // Gives the player a class, so the CSS makes it pretty
+        player.className = "piece";
+
+        // Starts by putting the player in tile 2
+        document.getElementById("2").appendChild(player);
+
+        for (let i = 0; i < activeUsers.length; i++) {
+            if (document.getElementById(activeUsers[i]) == null) {
+                const player = document.createElement('img');
+                player.src = "/static/monopoly/monopoly_piece_1.svg";
+                player.id = activeUsers[i];
+                player.className = "piece";
+                document.getElementById("2").appendChild(player);
+            }
+        }
+
 }
 
 function handle_monopoly_roll(data) {
@@ -143,5 +157,5 @@ function handle_monopoly_roll(data) {
 
     let span = document.getElementById(position);
 
-    span.append(player);
+    span.append(document.getElementById(username));
 }
